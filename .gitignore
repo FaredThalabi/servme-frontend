@@ -1,0 +1,50 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build output
+/dist
+/dist-ssr
+/.vite
+/.nuxt
+/.output
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swx
+*.bak
+*.tmp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+/coverage
+
+# Logs
+*.log
+
+# Optional: if using Cypress / Playwright
+/cypress/videos/
+/cypress/screenshots/
+/playwright-report
+/test-results

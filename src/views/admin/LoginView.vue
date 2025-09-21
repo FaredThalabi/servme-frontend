@@ -1,0 +1,144 @@
+<template>
+  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="text-center">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">ServMe</h1>
+        <h2 class="text-2xl font-semibold text-gray-600">Admin Portal</h2>
+        <p class="mt-2 text-sm text-gray-600">Sign in to access the admin dashboard</p>
+      </div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="card py-8 px-4 sm:px-10">
+        <form @submit.prevent="handleLogin" class="space-y-6">
+          <!-- Email Field -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">
+              Email address
+            </label>
+            <div class="mt-1">
+              <input
+                id="email"
+                v-model="form.email"
+                type="email"
+                autocomplete="email"
+                required
+                :class="[
+                  'input',
+                  errors.email ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
+                ]"
+                placeholder="admin@servme.com"
+              />
+              <div v-if="errors.email" class="mt-1 text-sm text-red-600">
+                {{ errors.email[0] }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Password Field -->
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <div class="mt-1">
+              <input
+                id="password"
+                v-model="form.password"
+                type="password"
+                autocomplete="current-password"
+                required
+                :class="[
+                  'input',
+                  errors.password ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
+                ]"
+                placeholder="Enter your password"
+              />
+              <div v-if="errors.password" class="mt-1 text-sm text-red-600">
+                {{ errors.password[0] }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Remember Me -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <input
+                id="remember"
+                v-model="form.remember"
+                type="checkbox"
+                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              />
+              <label for="remember" class="ml-2 block text-sm text-gray-900">
+                Remember me
+              </label>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div>
+            <button
+              type="submit"
+              :disabled="loading"
+              :class="[
+                'btn btn-primary w-full',
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              ]"
+            >
+              <span v-if="loading">Signing in...</span>
+              <span v-else>Sign in</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Demo Credentials -->
+        <div class="mt-6 p-4 bg-blue-50 rounded-md">
+          <h4 class="text-sm font-medium text-blue-800 mb-2">Demo Credentials:</h4>
+          <p class="text-sm text-blue-700">
+            <strong>Email:</strong> admin@servme.com<br>
+            <strong>Password:</strong> password
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.js'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+const form = reactive({
+  email: 'admin@servme.com',
+  password: '',
+  remember: false
+})
+
+const errors = ref({})
+const loading = ref(false)
+
+async function handleLogin() {
+  loading.value = true
+  errors.value = {}
+
+  const result = await authStore.login(form)
+
+  if (result.success) {
+    router.push('/admin')
+  } else {
+    errors.value = result.errors
+  }
+
+  loading.value = false
+}
+
+onMounted(async () => {
+  // Check if user is already authenticated
+  if (authStore.isAuthenticated) {
+    router.push('/admin')
+  }
+})
+</script>
