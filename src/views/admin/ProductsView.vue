@@ -120,7 +120,7 @@
               </p>
             </div>
             <div class="text-right ml-4">
-              <p class="text-lg font-bold text-gray-900">${{ product.price }}</p>
+              <p class="text-lg font-bold text-gray-900">{{ formatCurrency(product.price) }}</p>
             </div>
           </div>
 
@@ -523,6 +523,16 @@ onMounted(async () => {
     loadCategories()
   ])
 })
+
+// Helpers
+function formatCurrency(value) {
+  const num = Number(value || 0)
+  try {
+    return new Intl.NumberFormat('en-MY', { style: 'currency', currency: 'MYR', currencyDisplay: 'narrowSymbol' }).format(num)
+  } catch (e) {
+    return `RM${num.toFixed(2)}`
+  }
+}
 </script>
 
 <style scoped>

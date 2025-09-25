@@ -116,7 +116,7 @@
                 </svg>
               </button>
               <!-- Page title or breadcrumb can go here -->
-              <h1 class="lg:hidden text-xl font-semibold text-gray-900">ServMe Admin</h1>
+              <h1 class="lg:hidden text-xl font-semibold text-gray-900">ServMe</h1>
             </div>
 
             <!-- Right side: Tenant switcher and user menu -->

@@ -153,11 +153,13 @@ const recentOrders = ref([])
 const merchants = ref([])
 const loading = ref(false)
 
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(amount)
+function formatCurrency(value) {
+  const num = Number(value || 0)
+  try {
+    return new Intl.NumberFormat('en-MY', { style: 'currency', currency: 'MYR', currencyDisplay: 'narrowSymbol' }).format(num)
+  } catch (e) {
+    return `RM${num.toFixed(2)}`
+  }
 }
 
 const formatDate = (date) => {
@@ -199,13 +201,14 @@ const loadDashboardData = async () => {
     
     // Use tenant-specific endpoint if tenant is selected
     if (currentTenant.value) {
-      url = '/v1/admin/tenant/dashboard'
+      url = '/v1/admin/dashboard'
     }
     
     const response = await api.get(url)
     
-    stats.value = response.data.stats || {}
-    recentOrders.value = response.data.recent_orders || []
+    console.log('response', response.data.data.stats);
+    stats.value = response.data.data.stats || {}
+    recentOrders.value = response.data.data.recent_orders || []
     merchants.value = response.data.merchants || []
   } catch (error) {
     console.error('Error loading dashboard data:', error)

@@ -1,6 +1,11 @@
 import api from '@/utils/api.js'
 
 export const ordersService = {
+  // Create new order
+  async create(data) {
+    const response = await api.post('/v1/orders', data)
+    return response.data
+  },
   // Get all orders with optional filters
   async getAll(params = {}) {
     const response = await api.get('/v1/orders', { params })

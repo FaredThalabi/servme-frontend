@@ -65,7 +65,7 @@ const router = createRouter({
       component: CheckoutView
     },
     {
-      path: '/order/:orderNumber',
+      path: '/order/:id',
       name: 'order-status',
       component: OrderView,
       props: true

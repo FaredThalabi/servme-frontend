@@ -56,7 +56,7 @@
                 </div>
                 <p v-if="category.description" class="text-sm text-gray-500">{{ category.description }}</p>
                 <p class="text-xs text-gray-400 mt-1">
-                  {{ category.products_count || 0 }} products
+                  {{ category.products.length || 0 }} products
                 </p>
               </div>
             </div>

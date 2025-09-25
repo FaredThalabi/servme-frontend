@@ -55,12 +55,12 @@
         <div v-else v-for="product in filteredProducts" :key="product.id" class="bg-white rounded-lg shadow-sm overflow-hidden group">
           <div class="relative h-32 sm:h-40 bg-gray-100">
             <img v-if="product.imageUrl" :src="product.imageUrl" alt="" class="w-full h-full object-cover" />
-            <div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-sm font-semibold text-gray-900">
-              {{ formatPrice(product.price) }}
-            </div>
           </div>
           <div class="p-4">
-            <h3 class="font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">{{ product.name }}</h3>
+            <div class="flex items-start justify-between">
+              <h3 class="font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">{{ product.name }}</h3>
+              <div class="ml-3 text-sm font-semibold text-gray-900 whitespace-nowrap">{{ formatPrice(product.price) }}</div>
+            </div>
             <div class="mt-1">
               <span
                 v-if="product.categoryId && categoriesById[product.categoryId]"
@@ -71,9 +71,33 @@
             </div>
             <p class="text-sm text-gray-600 line-clamp-2 mt-1">{{ product.description }}</p>
             <div class="mt-3 flex items-center justify-between">
-              <button class="inline-flex items-center gap-2 px-3 py-2 rounded border hover:bg-gray-50" @click="addToCart(product)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Add
+              <div class="inline-flex items-center rounded-md border border-gray-300 overflow-hidden">
+                <button 
+                  type="button" 
+                  class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" 
+                  @click="decrementQty(product.id)" 
+                  :disabled="getQty(product.id) <= 1"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                  </svg>
+                </button>
+                <span class="w-10 h-8 flex items-center justify-center text-sm font-medium text-gray-900 border-l border-r border-gray-300">{{ getQty(product.id) }}</span>
+                <button 
+                  type="button" 
+                  class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100" 
+                  @click="incrementQty(product.id)"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                </button>
+              </div>
+              <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 transition-colors" @click="addToCart(product)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add ({{ getQty(product.id) }})
               </button>
             </div>
           </div>
@@ -118,10 +142,15 @@ const loading = ref(false)
 const cart = useCartStore()
 const itemCount = computed(() => cart.itemCount)
 const subtotal = computed(() => cart.subtotal)
+const localQty = ref({})
 
 function formatPrice(value) {
   const amount = Number(value || 0)
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(amount)
+  try {
+    return new Intl.NumberFormat('en-MY', { style: 'currency', currency: 'MYR', currencyDisplay: 'narrowSymbol' }).format(amount)
+  } catch (e) {
+    return `RM${amount.toFixed(2)}`
+  }
 }
 
 function normalizeProduct(p) {
@@ -164,12 +193,15 @@ async function loadCategories() {
 }
 
 function addToCart(product) {
+  const qty = getQty(product.id)
   cart.addItem({
     productId: product.id,
     name: product.name,
     price: product.price,
     imageUrl: product.imageUrl
-  }, 1)
+  }, qty)
+  // reset to 1 after adding
+  localQty.value[product.id] = 1
 }
 
 const filteredProducts = computed(() => {
@@ -183,6 +215,22 @@ const filteredProducts = computed(() => {
 
 function setCategory(id) {
   activeCategory.value = id
+}
+
+// Quantity controls per product card
+function getQty(productId) {
+  const val = localQty.value[productId]
+  return val && val > 0 ? val : 1
+}
+
+function incrementQty(productId) {
+  const current = getQty(productId)
+  localQty.value[productId] = current + 1
+}
+
+function decrementQty(productId) {
+  const current = getQty(productId)
+  localQty.value[productId] = Math.max(1, current - 1)
 }
 
 onMounted(() => {

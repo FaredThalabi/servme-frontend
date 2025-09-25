@@ -35,22 +35,45 @@
       </div>
 
       <!-- Registration / Contact Form -->
-      <form class="bg-white rounded-lg shadow-sm" @submit.prevent="proceedToPayment">
-        <div class="p-4 border-b">
-          <h2 class="font-semibold text-gray-900">Your Details</h2>
-        </div>
-        <div class="p-4 space-y-4">
-          <VInput label="Name" v-model="form.name" placeholder="Your name" />
-          <VInput label="Phone" type="tel" v-model="form.phone" placeholder="e.g. 012-3456789" />
-          <VInput label="Email (optional)" type="email" v-model="form.email" placeholder="you@example.com" />
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Notes (optional)</label>
-            <textarea v-model="form.notes" rows="3" class="input mt-1" placeholder="Any special requests?"></textarea>
+      <form @submit.prevent="proceedToPayment">
+        <!-- Details Card -->
+        <div class="bg-white rounded-lg shadow-sm">
+          <div class="p-4 border-b">
+            <h2 class="font-semibold text-gray-900">Your Details</h2>
+          </div>
+          <div class="p-4 space-y-4">
+            <VInput label="Name" v-model="form.name" placeholder="Your name" />
+            <VInput label="Phone" type="tel" v-model="form.phone" placeholder="e.g. 012-3456789" />
+            <VInput label="Email (optional)" type="email" v-model="form.email" placeholder="you@example.com" />
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Notes (optional)</label>
+              <textarea v-model="form.notes" rows="3" class="input mt-1" placeholder="Any special requests?"></textarea>
+            </div>
           </div>
         </div>
-        <div class="p-4 border-t flex items-center justify-between">
-          <router-link to="/menu/demo" class="text-primary-600">Back to Menu</router-link>
-          <button type="submit" class="btn btn-primary" :disabled="items.length === 0">Proceed to Payment</button>
+
+        <!-- Payment Method Card -->
+        <div class="bg-white rounded-lg shadow-sm mt-6">
+          <div class="p-4 border-b">
+            <h2 class="font-semibold text-gray-900">Payment Method</h2>
+          </div>
+          <div class="p-4 space-y-3">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" class="h-4 w-4" value="counter" v-model="form.payment_method" />
+              <span class="text-sm text-gray-800">Pay at counter</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="radio" class="h-4 w-4" value="online" v-model="form.payment_method" disabled />
+              <span class="text-sm text-gray-400">Pay online (Coming Soon)</span>
+            </label>
+          </div>
+          <div class="p-4 border-t flex items-center justify-between">
+            <router-link to="/menu/demo" class="text-primary-600">Back to Menu</router-link>
+            <button type="submit" class="btn btn-primary" :disabled="items.length === 0 || submitting">
+              <span v-if="!submitting">Place Order</span>
+              <span v-else>Placing...</span>
+            </button>
+          </div>
         </div>
       </form>
     </main>
@@ -58,9 +81,11 @@
 </template>
 
 <script setup>
-import { reactive, computed } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { useCartStore } from '@/stores/cart.js'
 import VInput from '@/components/input/VInput.vue'
+import { ordersService } from '@/services/ordersService.js'
+import { useRouter } from 'vue-router'
 
 const cart = useCartStore()
 const items = computed(() => cart.items)
@@ -70,17 +95,63 @@ const form = reactive({
   name: '',
   phone: '',
   email: '',
-  notes: ''
+  notes: '',
+  payment_method: 'counter'
 })
+
+const submitting = ref(false)
+const router = useRouter()
 
 function formatPrice(value) {
   const amount = Number(value || 0)
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(amount)
+  try {
+    return new Intl.NumberFormat('en-MY', { style: 'currency', currency: 'MYR', currencyDisplay: 'narrowSymbol' }).format(amount)
+  } catch (e) {
+    return `RM${amount.toFixed(2)}`
+  }
 }
 
 async function proceedToPayment() {
-  // Placeholder: integrate payment gateway flow here
-  alert('Proceeding to payment...')
+  // Online payments are not yet available
+  if (form.payment_method === 'online') {
+    alert('Online payment is coming soon. Please choose Pay at counter for now.')
+    return
+  }
+
+  const payload = {
+    items: items.value.map((i) => ({
+      id: i.productId,
+      quantity: i.quantity,
+      variants: i.variants || undefined,
+      notes: i.notes || undefined
+    })),
+    customer_name: form.name || undefined,
+    customer_phone: form.phone || undefined,
+    customer_email: form.email || undefined,
+    notes: form.notes || undefined,
+    payment_method: form.payment_method
+  }
+
+  try {
+    submitting.value = true
+    const resp = await ordersService.create(payload)
+    // Try to navigate to order status page using returned identifiers
+    console.log('resp', resp.data.order.id);
+    const orderId = resp.data.order.id;
+    console.log('orderId', orderId);
+    const orderNumber = resp?.data?.order_number || resp?.data?.number || resp?.data?.id
+    if (orderNumber) {
+      // Optionally clear the cart on successful order
+      try { cart.clear() } catch (e) {}
+      router.push({ name: 'order-status', params: { id: orderId } })
+    } else {
+      alert('Order placed successfully.')
+    }
+  } catch (e) {
+    alert(e?.response?.data?.message || 'Failed to place order. Please try again.')
+  } finally {
+    submitting.value = false
+  }
 }
 
 function increment(item) {
