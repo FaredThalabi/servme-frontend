@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/utils/api.js'
+import { setCurrentTenant } from '@/utils/tenant.js'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -16,13 +17,19 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     try {
       const response = await api.post('/v1/admin/login', credentials)
-      
-      const { token: authToken, user: userData } = response.data
-      
+
+      // Some backends wrap payload under data, support both shapes
+      const payload = response?.data?.data || response?.data || {}
+      const { token: authToken, user: userData, tenant } = payload
+
       // Store token and user data
       token.value = authToken
       user.value = userData
       localStorage.setItem('admin_token', authToken)
+      // Persist selected tenant context if provided
+      if (tenant) {
+        setCurrentTenant(tenant)
+      }
       
       return { success: true }
     } catch (error) {
@@ -56,8 +63,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await api.get('/v1/admin/auth-check')
-      user.value = response.data.user
-      return true
+      const payload = response?.data?.data || response?.data || {}
+      user.value = payload.user || null
+      return !!user.value
     } catch (error) {
       console.error('Auth check failed:', error)
       // Clear invalid token

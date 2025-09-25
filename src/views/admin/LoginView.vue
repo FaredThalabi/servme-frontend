@@ -12,52 +12,22 @@
       <div class="card py-8 px-4 sm:px-10">
         <form @submit.prevent="handleLogin" class="space-y-6">
           <!-- Email Field -->
-          <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <div class="mt-1">
-              <input
-                id="email"
-                v-model="form.email"
-                type="email"
-                autocomplete="email"
-                required
-                :class="[
-                  'input',
-                  errors.email ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
-                ]"
-                placeholder="admin@servme.com"
-              />
-              <div v-if="errors.email" class="mt-1 text-sm text-red-600">
-                {{ errors.email[0] }}
-              </div>
-            </div>
-          </div>
+          <VInput
+            label="Email address"
+            type="email"
+            v-model="form.email"
+            placeholder="admin@servme.com"
+            :errors="errors.email || []"
+          />
 
           <!-- Password Field -->
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <div class="mt-1">
-              <input
-                id="password"
-                v-model="form.password"
-                type="password"
-                autocomplete="current-password"
-                required
-                :class="[
-                  'input',
-                  errors.password ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
-                ]"
-                placeholder="Enter your password"
-              />
-              <div v-if="errors.password" class="mt-1 text-sm text-red-600">
-                {{ errors.password[0] }}
-              </div>
-            </div>
-          </div>
+          <VInput
+            label="Password"
+            type="password"
+            v-model="form.password"
+            placeholder="Enter your password"
+            :errors="errors.password || []"
+          />
 
           <!-- Remember Me -->
           <div class="flex items-center justify-between">
@@ -107,6 +77,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
+import VInput from '@/components/input/VInput.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

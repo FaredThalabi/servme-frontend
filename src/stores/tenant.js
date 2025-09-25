@@ -18,7 +18,9 @@ export const useTenantStore = defineStore('tenant', () => {
     loading.value = true
     try {
       const response = await api.get('/v1/admin/tenants')
-      tenants.value = response.data
+      const payload = response?.data?.data || response?.data || []
+      // Support either { tenants: [...] } or a direct array
+      tenants.value = Array.isArray(payload) ? payload : (payload.tenants || [])
       
       // If no current tenant is selected and we have tenants, select the first one
       if (!currentTenant.value && tenants.value.length > 0) {

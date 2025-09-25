@@ -9,6 +9,9 @@ const api = axios.create({
   },
 })
 
+// Temporary default tenant for customer menu until QR/selection flow is wired
+const DEFAULT_TENANT_ID = '01997f28-0912-72d7-8471-ccb1477d859a'
+
 // Request interceptor to add auth token and tenant ID
 api.interceptors.request.use(
   (config) => {
@@ -19,7 +22,7 @@ api.interceptors.request.use(
     }
 
     // Add tenant ID header if available
-    const tenantId = localStorage.getItem('selected_tenant_id')
+    const tenantId = localStorage.getItem('selected_tenant_id') || DEFAULT_TENANT_ID
     if (tenantId) {
       config.headers['X-Tenant-ID'] = tenantId
     }

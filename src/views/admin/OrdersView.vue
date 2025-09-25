@@ -185,7 +185,7 @@
                   <span>•</span>
                   <span>{{ order.items_count }} {{ order.items_count === 1 ? 'item' : 'items' }}</span>
                   <span>•</span>
-                  <span>${{ order.total_amount }}</span>
+                  <span>RM{{ order.total_amount }}</span>
                   <span>•</span>
                   <span>{{ formatDateTime(order.created_at) }}</span>
                 </div>
@@ -326,7 +326,7 @@
               </div>
               <div class="text-right">
                 <p class="text-sm font-medium text-gray-900">
-                  {{ item.quantity }} × ${{ item.price }} = ${{ (item.quantity * item.price).toFixed(2) }}
+                  {{ item.quantity }} × RM{{ item.price }} = RM{{ (item.quantity * item.price).toFixed(2) }}
                 </p>
               </div>
             </div>
@@ -336,7 +336,7 @@
           <div class="border-t border-gray-200 pt-3 mt-3">
             <div class="flex justify-between items-center">
               <p class="text-base font-medium text-gray-900">Total</p>
-              <p class="text-lg font-bold text-gray-900">${{ selectedOrder.total_amount }}</p>
+              <p class="text-lg font-bold text-gray-900">RM{{ selectedOrder.total_amount }}</p>
             </div>
           </div>
         </div>

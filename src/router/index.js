@@ -9,6 +9,7 @@ const AdminLayout = () => import('@/components/admin/AdminLayout.vue')
 // Customer Views
 const CustomerApp = () => import('@/views/customer/MenuView.vue')
 const OrderView = () => import('@/views/customer/OrderView.vue')
+const CheckoutView = () => import('@/views/customer/CheckoutView.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -57,6 +58,11 @@ const router = createRouter({
       name: 'customer-menu',
       component: CustomerApp,
       props: true
+    },
+    {
+      path: '/checkout',
+      name: 'customer-checkout',
+      component: CheckoutView
     },
     {
       path: '/order/:orderNumber',
