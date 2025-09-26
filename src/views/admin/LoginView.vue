@@ -75,7 +75,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const form = reactive({
-  email: 'admin@servme.com',
+  email: '',
   password: '',
   remember: false
 })
