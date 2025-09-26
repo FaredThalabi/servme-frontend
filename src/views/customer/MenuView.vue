@@ -3,11 +3,11 @@
     <header class="bg-white shadow-sm border-b">
       <div class="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Menu</h1>
-          <p class="text-sm text-gray-600 mt-1">QR Code: {{ qr }}</p>
+          <h1 class="text-2xl font-bold text-gray-900">{{ tenant?.name || 'ServMe' }}</h1>
+          <p class="text-sm text-gray-600 mt-1">Menu</p>
         </div>
         <router-link to="/checkout" class="relative inline-flex items-center">
-          <span class="btn btn-primary">Cart ({{ itemCount }})</span>
+          <BaseButton variant="brand">Cart ({{ itemCount }})</BaseButton>
         </router-link>
       </div>
     </header>
@@ -107,9 +107,11 @@
       <!-- Sticky Cart Summary -->
       <div class="fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur border-t">
         <div class="max-w-3xl mx-auto p-4">
-          <router-link to="/checkout" class="w-full btn btn-primary flex items-center justify-between">
-            <span class="font-semibold">View Cart ({{ itemCount }})</span>
-            <span class="opacity-90">Subtotal: {{ formatPrice(subtotal) }}</span>
+          <router-link to="/checkout" class="w-full">
+            <BaseButton variant="brand" class="w-full flex items-center justify-between">
+              <span class="font-semibold">View Cart ({{ itemCount }})</span>
+              <span class="opacity-90">Subtotal: {{ formatPrice(subtotal) }}</span>
+            </BaseButton>
           </router-link>
         </div>
       </div>
@@ -123,12 +125,16 @@ import { useCartStore } from '@/stores/cart.js'
 import { setCurrentTenant } from '@/utils/tenant.js'
 import { productsService } from '@/services/productsService.js'
 import { categoriesService } from '@/services/categoriesService.js'
+import { tenantsService } from '@/services/tenantsService.js'
+import BaseButton from '@/components/shared/BaseButton.vue'
+import { useNotificationsStore } from '@/stores/notifications.js'
 
 const props = defineProps({
   qr: { type: String, required: true }
 })
 
 const products = ref([])
+const tenant = ref(null)
 const categories = ref([])
 const categoriesById = computed(() => {
   return categories.value.reduce((acc, c) => {
@@ -140,6 +146,7 @@ const activeCategory = ref(null)
 const search = ref('')
 const loading = ref(false)
 const cart = useCartStore()
+const notifications = useNotificationsStore()
 const itemCount = computed(() => cart.itemCount)
 const subtotal = computed(() => cart.subtotal)
 const localQty = ref({})
@@ -163,6 +170,11 @@ function normalizeProduct(p) {
     price: Number(base.price || base.unit_price || 0),
     imageUrl: base.image_url || base.imageUrl || ''
   }
+}
+
+async function loadTenant() {
+  const resp = await tenantsService.getById(props.qr)
+  tenant.value = resp.data
 }
 
 async function loadProducts() {
@@ -202,6 +214,7 @@ function addToCart(product) {
   }, qty)
   // reset to 1 after adding
   localQty.value[product.id] = 1
+  notifications.push({ title: 'Added to cart', message: `${product.name} x${qty} added.`, type: 'success' })
 }
 
 const filteredProducts = computed(() => {
@@ -238,6 +251,7 @@ onMounted(() => {
   if (props.qr) {
     setCurrentTenant({ id: props.qr })
   }
+  loadTenant()
   loadProducts()
   loadCategories()
 })

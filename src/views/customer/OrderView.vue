@@ -6,12 +6,12 @@
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-3xl font-bold text-gray-900">Order Status</h1>
-            <p class="text-sm text-gray-600 mt-1">Order #{{ orderNumber }}</p>
+            <p class="text-sm text-gray-600 mt-1">Order #{{ displayOrderNumber }}</p>
           </div>
-          <div class="text-right">
+          <!-- <div class="text-right">
             <div class="text-xs text-gray-500 uppercase tracking-wide">Order ID</div>
             <div class="text-sm font-mono text-gray-700">{{ orderNumber }}</div>
-          </div>
+          </div> -->
         </div>
       </div>
     </header>
@@ -185,7 +185,7 @@
                 <div class="space-y-2 text-sm">
                   <div class="flex justify-between">
                     <span class="text-gray-600">Order Number</span>
-                    <span class="font-mono text-gray-900">#{{ orderNumber }}</span>
+                    <span class="font-mono text-gray-900">#{{ displayOrderNumber }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-gray-600">Placed At</span>
@@ -233,7 +233,8 @@ export default {
     },
     orderNumber: {
       type: String,
-      required: true
+      required: false,
+      default: ''
     }
   },
   data() {
@@ -246,6 +247,9 @@ export default {
     }
   },
   computed: {
+    displayOrderNumber() {
+      return this.order?.order_number || ''
+    },
     statusLabel() {
       const status = this.order?.status || 'preparing'
       const map = { pending: 'Pending', preparing: 'Preparing', ready: 'Ready', completed: 'Completed', cancelled: 'Cancelled' }

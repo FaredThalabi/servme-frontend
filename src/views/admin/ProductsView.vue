@@ -83,8 +83,8 @@
         <!-- Product Image -->
         <div class="h-48 bg-gray-100 relative">
           <img
-            v-if="product.image_url"
-            :src="product.image_url"
+            v-if="product.image_url || product.image"
+            :src="imageSrc(product)"
             :alt="product.name"
             class="w-full h-full object-cover"
           />
@@ -333,6 +333,7 @@ import { productsService } from '@/services/productsService.js'
 import { categoriesService } from '@/services/categoriesService.js'
 import BaseModal from '@/components/shared/BaseModal.vue'
 import BaseButton from '@/components/shared/BaseButton.vue'
+import { toStorageUrl } from '@/utils/url.js'
 
 // Reactive data
 const products = ref([])
@@ -468,9 +469,10 @@ async function submitForm() {
     }
 
     // Handle image upload if there's a selected image
-    if (selectedImage.value && productData.id) {
+    const createdOrUpdatedId = productData?.data?.id || productData?.id || editingProduct.value?.id
+    if (selectedImage.value && createdOrUpdatedId) {
       try {
-        await productsService.uploadImage(productData.id, selectedImage.value)
+        await productsService.uploadImage(createdOrUpdatedId, selectedImage.value)
       } catch (imageError) {
         console.error('Error uploading image:', imageError)
         // Continue even if image upload fails
@@ -507,7 +509,7 @@ async function deleteProduct() {
 async function toggleProductAvailability(product) {
   try {
     product.updating = true
-    await productsService.toggleAvailability(product.id)
+    await productsService.update(product.id, { is_available: !product.is_available })
     await loadProducts()
   } catch (error) {
     console.error('Error toggling product availability:', error)
@@ -532,6 +534,14 @@ function formatCurrency(value) {
   } catch (e) {
     return `RM${num.toFixed(2)}`
   }
+}
+
+function imageSrc(product) {
+  // Accept both absolute URLs and storage paths
+  const src = product.image_url || product.image
+  if (!src) return ''
+  if (/^https?:\/\//i.test(src)) return src
+  return toStorageUrl(src)
 }
 </script>
 

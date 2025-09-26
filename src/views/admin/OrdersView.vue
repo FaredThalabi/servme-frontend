@@ -260,7 +260,7 @@
       size="xl"
       @close="showDetailsModal = false"
     >
-      <div v-if="selectedOrder" class="space-y-6">
+      <div v-if="selectedOrder" class="space-y-6 space-x-6">
         <!-- Order Header -->
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
           <div class="flex items-center justify-between mb-4">

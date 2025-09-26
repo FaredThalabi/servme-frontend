@@ -68,11 +68,11 @@
             </label>
           </div>
           <div class="p-4 border-t flex items-center justify-between">
-            <router-link to="/menu/demo" class="text-primary-600">Back to Menu</router-link>
-            <button type="submit" class="btn btn-primary" :disabled="items.length === 0 || submitting">
+            <router-link :to="backToMenuTo" class="text-primary-600">Back to Menu</router-link>
+            <BaseButton type="submit" variant="brand" :disabled="items.length === 0 || submitting">
               <span v-if="!submitting">Place Order</span>
               <span v-else>Placing...</span>
-            </button>
+            </BaseButton>
           </div>
         </div>
       </form>
@@ -86,6 +86,8 @@ import { useCartStore } from '@/stores/cart.js'
 import VInput from '@/components/input/VInput.vue'
 import { ordersService } from '@/services/ordersService.js'
 import { useRouter } from 'vue-router'
+import BaseButton from '@/components/shared/BaseButton.vue'
+import { getCurrentTenantId } from '@/utils/tenant.js'
 
 const cart = useCartStore()
 const items = computed(() => cart.items)
@@ -101,6 +103,7 @@ const form = reactive({
 
 const submitting = ref(false)
 const router = useRouter()
+const backToMenuTo = computed(() => ({ name: 'customer-menu', params: { qr: getCurrentTenantId() || '' } }))
 
 function formatPrice(value) {
   const amount = Number(value || 0)
@@ -143,7 +146,7 @@ async function proceedToPayment() {
     if (orderNumber) {
       // Optionally clear the cart on successful order
       try { cart.clear() } catch (e) {}
-      router.push({ name: 'order-status', params: { id: orderId } })
+      router.push({ name: 'order-status', params: { id: orderId, orderNumber: orderNumber } })
     } else {
       alert('Order placed successfully.')
     }
