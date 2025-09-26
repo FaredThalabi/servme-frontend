@@ -7,6 +7,11 @@ export const productsService = {
     return response.data
   },
 
+  async merchantProducts(params = {}) {
+    const response = await api.get('/v1/merchant/products', { params })
+    return response.data
+  },
+
   // Get product by ID
   async getById(id) {
     const response = await api.get(`/v1/products/${id}`)

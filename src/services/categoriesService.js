@@ -7,6 +7,11 @@ export const categoriesService = {
     return response.data
   },
 
+  async merchantCategories() {
+    const response = await api.get('/v1/merchant/categories')
+    return response.data
+  },
+
   // Get category by ID
   async getById(id) {
     const response = await api.get(`/v1/categories/${id}`)
@@ -30,10 +35,4 @@ export const categoriesService = {
     const response = await api.delete(`/v1/categories/${id}`)
     return response.data
   },
-
-  // Toggle category status (active/inactive)
-  async toggleStatus(id) {
-    const response = await api.patch(`/v1/categories/${id}/toggle-status`)
-    return response.data
-  }
 }

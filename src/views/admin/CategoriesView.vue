@@ -99,41 +99,39 @@
     >
       <form @submit.prevent="submitForm" class="space-y-4">
         <div>
-          <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-          <input
+          <BaseInput
             id="name"
             v-model="form.name"
             type="text"
-            required
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            label="Name"
             placeholder="Enter category name"
+            :errors="errors.name"
+            class="mt-1"
           />
-          <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name[0] }}</p>
         </div>
 
         <div>
           <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
+          <BaseTextArea
             id="description"
             v-model="form.description"
-            rows="3"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            :rows="3"
             placeholder="Enter category description (optional)"
-          ></textarea>
-          <p v-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description[0] }}</p>
+            :error="errors.description ? errors.description[0] : ''"
+            class="mt-1"
+          />
         </div>
 
         <div>
-          <label for="sort_order" class="block text-sm font-medium text-gray-700">Sort Order</label>
-          <input
+          <BaseInput
             id="sort_order"
-            v-model.number="form.sort_order"
+            v-model="form.sort_order"
             type="number"
-            min="0"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            label="Sort Order"
             placeholder="0"
+            :errors="errors.sort_order"
+            class="mt-1"
           />
-          <p v-if="errors.sort_order" class="mt-1 text-sm text-red-600">{{ errors.sort_order[0] }}</p>
         </div>
 
         <div class="flex items-center">
@@ -151,13 +149,13 @@
         <BaseButton
           variant="outline"
           @click="closeModal"
-          class="mr-3"
         >
           Cancel
         </BaseButton>
         <BaseButton
           @click="submitForm"
           :loading="submitting"
+          class="mr-3"
         >
           {{ editingCategory ? 'Update' : 'Create' }}
         </BaseButton>
@@ -179,7 +177,6 @@
         <BaseButton
           variant="outline"
           @click="showDeleteModal = false"
-          class="mr-3"
         >
           Cancel
         </BaseButton>
@@ -187,6 +184,7 @@
           variant="danger"
           @click="deleteCategory"
           :loading="deleting"
+          class="mr-3"
         >
           Delete
         </BaseButton>
@@ -200,6 +198,8 @@ import { ref, onMounted, reactive } from 'vue'
 import { categoriesService } from '@/services/categoriesService.js'
 import BaseModal from '@/components/shared/BaseModal.vue'
 import BaseButton from '@/components/shared/BaseButton.vue'
+import BaseTextArea from '@/components/shared/BaseTextArea.vue'
+import BaseInput from '@/components/shared/BaseInput.vue'
 
 // Reactive data
 const categories = ref([])
@@ -313,7 +313,7 @@ async function toggleCategoryStatus(category) {
   try {
     // Add local loading state
     category.updating = true
-    await categoriesService.toggleStatus(category.id)
+    await categoriesService.update(category.id, { is_active: !category.is_active })
     await loadCategories()
   } catch (error) {
     console.error('Error toggling category status:', error)

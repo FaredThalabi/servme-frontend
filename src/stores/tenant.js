@@ -50,6 +50,9 @@ export const useTenantStore = defineStore('tenant', () => {
     if (savedTenant) {
       currentTenant.value = savedTenant
     }
+    
+    // Fetch tenants on initialization to enable auto-selection
+    fetchTenants()
   }
 
   return {

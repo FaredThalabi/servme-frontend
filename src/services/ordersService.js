@@ -6,6 +6,12 @@ export const ordersService = {
     const response = await api.post('/v1/orders', data)
     return response.data
   },
+  
+  // Mark order as paid (counter payments)
+  async markPaid(id) {
+    const response = await api.patch(`/v1/orders/${id}/pay`)
+    return response.data
+  },
   // Get all orders with optional filters
   async getAll(params = {}) {
     const response = await api.get('/v1/orders', { params })

@@ -16,7 +16,7 @@
       <!-- Search -->
       <div class="mb-4">
         <div class="relative">
-          <input v-model="search" type="text" class="input pl-10" placeholder="Search menu..." />
+          <BaseInput v-model="search" type="text" placeholder="Search menu..." class="pl-10" />
           <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
           </svg>
@@ -54,7 +54,12 @@
         <!-- Product card -->
         <div v-else v-for="product in filteredProducts" :key="product.id" class="bg-white rounded-lg shadow-sm overflow-hidden group">
           <div class="relative h-32 sm:h-40 bg-gray-100">
-            <img v-if="product.imageUrl" :src="product.imageUrl" alt="" class="w-full h-full object-cover" />
+            <img v-if="product.image" :src="imageSrc(product)" alt="" class="w-full h-full object-cover" />
+            <div v-else class="w-full h-full flex items-center justify-center">
+              <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
           </div>
           <div class="p-4">
             <div class="flex items-start justify-between">
@@ -127,7 +132,9 @@ import { productsService } from '@/services/productsService.js'
 import { categoriesService } from '@/services/categoriesService.js'
 import { tenantsService } from '@/services/tenantsService.js'
 import BaseButton from '@/components/shared/BaseButton.vue'
+import BaseInput from '@/components/shared/BaseInput.vue'
 import { useNotificationsStore } from '@/stores/notifications.js'
+import { toStorageUrl } from '@/utils/url.js'
 
 const props = defineProps({
   qr: { type: String, required: true }
@@ -168,7 +175,7 @@ function normalizeProduct(p) {
     name: base.name,
     description: base.description || '',
     price: Number(base.price || base.unit_price || 0),
-    imageUrl: base.image_url || base.imageUrl || ''
+    image: base.image_url || base.image || ''
   }
 }
 
@@ -180,7 +187,7 @@ async function loadTenant() {
 async function loadProducts() {
   loading.value = true
   try {
-    const resp = await productsService.getAll({ qr: props.qr })
+    const resp = await productsService.merchantProducts()
     const list = Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : []
     products.value = list.map((p) => {
       const np = normalizeProduct(p)
@@ -196,7 +203,7 @@ async function loadProducts() {
 
 async function loadCategories() {
   try {
-    const resp = await categoriesService.getAll()
+    const resp = await categoriesService.merchantCategories()
     const list = Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : []
     categories.value = list.map((c) => ({ id: c.id, name: c.name }))
   } catch (e) {
@@ -210,7 +217,7 @@ function addToCart(product) {
     productId: product.id,
     name: product.name,
     price: product.price,
-    imageUrl: product.imageUrl
+    image: product.image
   }, qty)
   // reset to 1 after adding
   localQty.value[product.id] = 1
@@ -244,6 +251,14 @@ function incrementQty(productId) {
 function decrementQty(productId) {
   const current = getQty(productId)
   localQty.value[productId] = Math.max(1, current - 1)
+}
+
+function imageSrc(product) {
+  // Accept both absolute URLs and storage paths
+  const src = product.image
+  if (!src) return ''
+  if (/^https?:\/\//i.test(src)) return src
+  return toStorageUrl(src)
 }
 
 onMounted(() => {

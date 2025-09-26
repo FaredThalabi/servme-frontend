@@ -11,16 +11,16 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       <StatsCard
+        title="Today's Orders"
+        :value="stats.todays_orders || 0"
+        icon="chart-bar"
+        color="purple"
+      />
+      <StatsCard
         title="Total Orders"
         :value="stats.total_orders || 0"
         icon="shopping-bag"
         color="blue"
-      />
-      <StatsCard
-        title="Total Revenue"
-        :value="formatCurrency(stats.total_revenue || 0)"
-        icon="currency-dollar"
-        color="green"
       />
       <StatsCard
         title="Pending Orders"
@@ -29,10 +29,10 @@
         color="yellow"
       />
       <StatsCard
-        title="Today's Orders"
-        :value="stats.todays_orders || 0"
-        icon="chart-bar"
-        color="purple"
+        title="Total Revenue"
+        :value="formatCurrency(stats.total_revenue || 0)"
+        icon="currency-dollar"
+        color="green"
       />
     </div>
 

@@ -47,7 +47,7 @@
             <VInput label="Email (optional)" type="email" v-model="form.email" placeholder="you@example.com" />
             <div>
               <label class="block text-sm font-medium text-gray-700">Notes (optional)</label>
-              <textarea v-model="form.notes" rows="3" class="input mt-1" placeholder="Any special requests?"></textarea>
+              <BaseTextArea v-model="form.notes" :rows="3" class="mt-1" placeholder="Any special requests?" />
             </div>
           </div>
         </div>
@@ -84,6 +84,7 @@
 import { reactive, ref, computed } from 'vue'
 import { useCartStore } from '@/stores/cart.js'
 import VInput from '@/components/input/VInput.vue'
+import BaseTextArea from '@/components/shared/BaseTextArea.vue'
 import { ordersService } from '@/services/ordersService.js'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/shared/BaseButton.vue'
