@@ -42,9 +42,9 @@
             <h2 class="font-semibold text-gray-900">Your Details</h2>
           </div>
           <div class="p-4 space-y-4">
-            <VInput label="Name" v-model="form.name" placeholder="Your name" />
-            <VInput label="Phone" type="tel" v-model="form.phone" placeholder="e.g. 012-3456789" />
-            <VInput label="Email (optional)" type="email" v-model="form.email" placeholder="you@example.com" />
+            <BaseInput label="Name" v-model="form.name" placeholder="Your name" />
+            <BaseInput label="Phone" type="tel" v-model="form.phone" placeholder="e.g. 012-3456789" />
+            <BaseInput label="Email (optional)" type="email" v-model="form.email" placeholder="you@example.com" />
             <div>
               <label class="block text-sm font-medium text-gray-700">Notes (optional)</label>
               <BaseTextArea v-model="form.notes" :rows="3" class="mt-1" placeholder="Any special requests?" />
@@ -83,7 +83,7 @@
 <script setup>
 import { reactive, ref, computed } from 'vue'
 import { useCartStore } from '@/stores/cart.js'
-import VInput from '@/components/input/VInput.vue'
+import BaseInput from '@/components/shared/BaseInput.vue'
 import BaseTextArea from '@/components/shared/BaseTextArea.vue'
 import { ordersService } from '@/services/ordersService.js'
 import { useRouter } from 'vue-router'

@@ -12,16 +12,16 @@
       <div class="card py-8 px-4 sm:px-10">
         <form @submit.prevent="handleLogin" class="space-y-6">
           <!-- Email Field -->
-          <VInput
+          <BaseInput
             label="Email address"
             type="email"
             v-model="form.email"
-            placeholder="admin@servme.com"
+            placeholder="john@doe.com"
             :errors="errors.email || []"
           />
 
           <!-- Password Field -->
-          <VInput
+          <BaseInput
             label="Password"
             type="password"
             v-model="form.password"
@@ -60,14 +60,6 @@
           </div>
         </form>
 
-        <!-- Demo Credentials -->
-        <div class="mt-6 p-4 bg-blue-50 rounded-md">
-          <h4 class="text-sm font-medium text-blue-800 mb-2">Demo Credentials:</h4>
-          <p class="text-sm text-blue-700">
-            <strong>Email:</strong> admin@servme.com<br>
-            <strong>Password:</strong> password
-          </p>
-        </div>
       </div>
     </div>
   </div>
@@ -77,7 +69,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
-import VInput from '@/components/input/VInput.vue'
+import BaseInput from '@/components/shared/BaseInput.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

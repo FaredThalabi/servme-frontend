@@ -29,31 +29,26 @@
           />
         </div>
         <div class="min-w-48">
-          <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-          <select
+          <BaseSelect
             id="category"
             v-model="filters.category_id"
-            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            label="Category"
+            placeholder="All Categories"
+            :options="categoryOptions"
+            class="w-full"
             @change="loadProducts"
-          >
-            <option value="">All Categories</option>
-            <option v-for="category in categories" :key="category.id" :value="category.id">
-              {{ category.name }}
-            </option>
-          </select>
+          />
         </div>
         <div class="min-w-32">
-          <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select
+          <BaseSelect
             id="status"
             v-model="filters.is_available"
-            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            label="Status"
+            placeholder="All"
+            :options="statusOptions"
+            class="w-full"
             @change="loadProducts"
-          >
-            <option value="">All</option>
-            <option value="1">Available</option>
-            <option value="0">Unavailable</option>
-          </select>
+          />
         </div>
       </div>
     </div>
@@ -178,19 +173,16 @@
           </div>
 
           <div>
-            <label for="category_id" class="block text-sm font-medium text-gray-700">Category *</label>
-            <select
+            <BaseSelect
               id="category_id"
               v-model="form.category_id"
-              required
-              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            >
-              <option value="">Select a category</option>
-              <option v-for="category in categories" :key="category.id" :value="category.id">
-                {{ category.name }}
-              </option>
-            </select>
-            <p v-if="errors.category_id" class="mt-1 text-sm text-red-600">{{ errors.category_id[0] }}</p>
+              label="Category"
+              placeholder="Select a category"
+              :options="categoryOptions"
+              :required="true"
+              :errors="errors.category_id"
+              class="mt-1"
+            />
           </div>
         </div>
 
@@ -209,11 +201,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label for="price" class="block text-sm font-medium text-gray-700">Price *</label>
-            <div class="mt-1 relative rounded-md shadow-sm">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span class="text-gray-500 sm:text-sm">RM</span>
-              </div>
-              <BaseInput
+            <BaseInput
                 id="price"
                 v-model="form.price"
                 type="number"
@@ -221,9 +209,8 @@
                 min="0"
                 placeholder="0.00"
                 :errors="errors.price"
-                class="pl-7 block w-full"
+                class="mt-1"
               />
-            </div>
           </div>
 
           <div>
@@ -281,13 +268,13 @@
         <BaseButton
           variant="outline"
           @click="closeModal"
-          class="mr-3"
         >
           Cancel
         </BaseButton>
         <BaseButton
           @click="submitForm"
           :loading="submitting"
+          class="mr-3"
         >
           {{ editingProduct ? 'Update' : 'Create' }}
         </BaseButton>
@@ -309,7 +296,6 @@
         <BaseButton
           variant="outline"
           @click="showDeleteModal = false"
-          class="mr-3"
         >
           Cancel
         </BaseButton>
@@ -317,6 +303,7 @@
           variant="danger"
           @click="deleteProduct"
           :loading="deleting"
+          class="mr-3"
         >
           Delete
         </BaseButton>
@@ -333,6 +320,7 @@ import BaseModal from '@/components/shared/BaseModal.vue'
 import BaseButton from '@/components/shared/BaseButton.vue'
 import BaseTextArea from '@/components/shared/BaseTextArea.vue'
 import BaseInput from '@/components/shared/BaseInput.vue'
+import BaseSelect from '@/components/shared/BaseSelect.vue'
 import { toStorageUrl } from '@/utils/url.js'
 
 // Reactive data
@@ -543,6 +531,20 @@ function imageSrc(product) {
   if (/^https?:\/\//i.test(src)) return src
   return toStorageUrl(src)
 }
+
+// Computed properties for select options
+const categoryOptions = computed(() => {
+  return categories.value.map(category => ({
+    value: category.id,
+    label: category.name
+  }))
+})
+
+const statusOptions = computed(() => [
+  { value: '', label: 'All' },
+  { value: '1', label: 'Available' },
+  { value: '0', label: 'Unavailable' }
+])
 </script>
 
 <style scoped>

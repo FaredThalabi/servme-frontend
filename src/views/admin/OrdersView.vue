@@ -166,7 +166,7 @@
             class="block text-sm font-medium text-gray-700 mb-1"
             >Search</label
           >
-          <VInput
+          <BaseInput
             v-model="filters.search"
             placeholder="Search by order number, customer..."
             @input="debouncedSearch"
@@ -178,7 +178,7 @@
             class="block text-sm font-medium text-gray-700 mb-1"
             >Status</label
           >
-          <VSelect
+          <BaseSelect
             id="status"
             v-model="filters.status"
             :options="[
@@ -191,7 +191,7 @@
             ]"
             @change="loadOrders"
           >
-          </VSelect>
+          </BaseSelect>
         </div>
         <div class="min-w-40">
           <label
@@ -199,7 +199,7 @@
             class="block text-sm font-medium text-gray-700 mb-1"
             >Date Range</label
           >
-          <VSelect
+          <BaseSelect
             id="date_range"
             v-model="filters.date_range"
             :options="[
@@ -211,7 +211,7 @@
             ]"
             @change="loadOrders"
           >
-          </VSelect>
+          </BaseSelect>
         </div>
       </div>
     </div>
@@ -810,8 +810,8 @@ import { ordersService } from "@/services/ordersService.js";
 import BaseModal from "@/components/shared/BaseModal.vue";
 import BaseButton from "@/components/shared/BaseButton.vue";
 import BaseTextArea from "@/components/shared/BaseTextArea.vue";
-import VInput from "../../components/input/VInput.vue";
-import VSelect from "../../components/input/VSelect.vue";
+import BaseInput from "@/components/shared/BaseInput.vue";
+import BaseSelect from "@/components/shared/BaseSelect.vue";
 import { useNotificationsStore } from '@/stores/notifications.js'
 
 // Reactive data
