@@ -45,8 +45,8 @@ api.interceptors.response.use(
       localStorage.removeItem('admin_token')
       localStorage.removeItem('selected_tenant_id')
       
-      // Redirect to login if not already there
-      if (!window.location.pathname.includes('login')) {
+      // Only redirect admin routes to login, not customer routes
+      if (window.location.pathname.startsWith('/admin') && !window.location.pathname.includes('login')) {
         window.location.href = '/admin/login'
       }
     }
