@@ -189,7 +189,7 @@
               { value: 'completed', label: 'Completed' },
               { value: 'cancelled', label: 'Cancelled' },
             ]"
-            @change="loadOrders"
+            @change="() => { pagination.currentPage = 1; loadOrders(); }"
           >
           </BaseSelect>
         </div>
@@ -209,7 +209,7 @@
               { value: 'this_week', label: 'This Week' },
               { value: 'this_month', label: 'This Month' },
             ]"
-            @change="loadOrders"
+            @change="() => { pagination.currentPage = 1; loadOrders(); }"
           >
           </BaseSelect>
         </div>
@@ -352,6 +352,100 @@
           </div>
         </li>
       </ul>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="!loading && orders.length > 0" class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+      <!-- Pagination Info -->
+      <div class="flex-1 flex justify-between sm:hidden">
+        <BaseButton
+          variant="outline"
+          :disabled="pagination.currentPage <= 1"
+          @click="prevPage"
+        >
+          Previous
+        </BaseButton>
+        <BaseButton
+          variant="outline"
+          :disabled="pagination.currentPage >= pagination.lastPage"
+          @click="nextPage"
+        >
+          Next
+        </BaseButton>
+      </div>
+      
+      <!-- Desktop Pagination -->
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div class="flex items-center space-x-4">
+          <!-- Results info -->
+          <p class="text-sm text-gray-700">
+            Showing
+            <span class="font-medium">{{ pagination.from || 0 }}</span>
+            to
+            <span class="font-medium">{{ pagination.to || 0 }}</span>
+            of
+            <span class="font-medium">{{ pagination.total }}</span>
+            results
+          </p>
+          
+          <!-- Per page selector -->
+          <div class="flex items-center space-x-2">
+            <label for="per-page" class="text-sm text-gray-700">Show:</label>
+            <BaseSelect
+              id="per-page"
+              :model-value="pagination.perPage"
+              @update:model-value="changePerPage"
+              :options="[
+                { value: 5, label: '5' },
+                { value: 10, label: '10' },
+                { value: 25, label: '25' },
+                { value: 50, label: '50' }
+              ]"
+              class="w-20"
+            />
+          </div>
+        </div>
+        
+        <!-- Page navigation -->
+        <div class="flex items-center space-x-1">
+          <!-- Previous button -->
+          <BaseButton
+            variant="outline"
+            size="sm"
+            :disabled="pagination.currentPage <= 1"
+            @click="prevPage"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </BaseButton>
+          
+          <!-- Page numbers -->
+          <template v-for="page in getVisiblePages()" :key="page">
+            <BaseButton
+              v-if="page !== '...'"
+              :variant="page === pagination.currentPage ? 'brand' : 'outline'"
+              size="sm"
+              @click="goToPage(page)"
+            >
+              {{ page }}
+            </BaseButton>
+            <span v-else class="px-3 py-2 text-sm text-gray-500">...</span>
+          </template>
+          
+          <!-- Next button -->
+          <BaseButton
+            variant="outline"
+            size="sm"
+            :disabled="pagination.currentPage >= pagination.lastPage"
+            @click="nextPage"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </BaseButton>
+        </div>
+      </div>
     </div>
 
     <!-- Order Details Modal -->
@@ -805,7 +899,7 @@
 </template>
 
 <script setup>
- import { ref, onMounted, onUnmounted, reactive } from "vue";
+ import { ref, onMounted, onUnmounted, reactive, watch } from "vue";
 import { ordersService } from "@/services/ordersService.js";
 import BaseModal from "@/components/shared/BaseModal.vue";
 import BaseButton from "@/components/shared/BaseButton.vue";
@@ -813,13 +907,18 @@ import BaseTextArea from "@/components/shared/BaseTextArea.vue";
 import BaseInput from "@/components/shared/BaseInput.vue";
 import BaseSelect from "@/components/shared/BaseSelect.vue";
 import { useNotificationsStore } from '@/stores/notifications.js'
+import { useTenantStore } from '@/stores/tenant.js'
+import websocketService from '@/services/websocketService.js'
+
+// Initialize stores
+const notifications = useNotificationsStore()
+const tenantStore = useTenantStore()
 
 // Reactive data
 const orders = ref([]);
 const stats = ref({});
 const loading = ref(true);
 const cancelling = ref(false);
-const notifications = useNotificationsStore()
 
 // Modal states
 const showDetailsModal = ref(false);
@@ -829,6 +928,16 @@ const showCancelModal = ref(false);
 const selectedOrder = ref(null);
 const orderToCancel = ref(null);
 const cancelReason = ref("");
+
+// Pagination state
+const pagination = ref({
+  currentPage: 1,
+  perPage: 10,
+  total: 0,
+  lastPage: 1,
+  from: 0,
+  to: 0
+});
 
 // Filters
 const filters = reactive({
@@ -842,6 +951,7 @@ let searchTimeout = null;
 const debouncedSearch = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
+    pagination.value.currentPage = 1; // Reset to first page when searching
     refresh();
   }, 300);
 };
@@ -851,21 +961,134 @@ async function refresh() {
   await loadStats();
 }
 
-// Auto-refresh every 15 seconds
+// Pagination functions
+function goToPage(page) {
+  if (page >= 1 && page <= pagination.value.lastPage) {
+    pagination.value.currentPage = page;
+    loadOrders();
+  }
+}
+
+function changePerPage(newPerPage) {
+  pagination.value.perPage = newPerPage;
+  pagination.value.currentPage = 1; // Reset to first page
+  loadOrders();
+}
+
+function nextPage() {
+  if (pagination.value.currentPage < pagination.value.lastPage) {
+    goToPage(pagination.value.currentPage + 1);
+  }
+}
+
+function prevPage() {
+  if (pagination.value.currentPage > 1) {
+    goToPage(pagination.value.currentPage - 1);
+  }
+}
+
+// Get visible page numbers for pagination
+function getVisiblePages() {
+  const current = pagination.value.currentPage;
+  const last = pagination.value.lastPage;
+  const pages = [];
+  
+  if (last <= 7) {
+    // Show all pages if 7 or fewer
+    for (let i = 1; i <= last; i++) {
+      pages.push(i);
+    }
+  } else {
+    // Always show first page
+    pages.push(1);
+    
+    if (current <= 4) {
+      // Show first 5 pages + ellipsis + last page
+      for (let i = 2; i <= 5; i++) {
+        pages.push(i);
+      }
+      pages.push('...');
+      pages.push(last);
+    } else if (current >= last - 3) {
+      // Show first page + ellipsis + last 5 pages
+      pages.push('...');
+      for (let i = last - 4; i <= last; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show first page + ellipsis + current-1, current, current+1 + ellipsis + last page
+      pages.push('...');
+      for (let i = current - 1; i <= current + 1; i++) {
+        pages.push(i);
+      }
+      pages.push('...');
+      pages.push(last);
+    }
+  }
+  
+  return pages;
+}
+
+// Real-time updates
 let autoRefreshTimer = null;
 
 // Methods
 async function loadOrders() {
   try {
     loading.value = true;
-    const params = {};
+    const params = {
+      page: pagination.value.currentPage,
+      per_page: pagination.value.perPage
+    };
 
     if (filters.search) params.search = filters.search;
     if (filters.status) params.status = filters.status;
     if (filters.date_range) params.date_range = filters.date_range;
 
     const response = await ordersService.getAll(params);
-    orders.value = response.data || response;
+    
+    // Debug logging to see the actual response structure
+    console.log('Orders API Response:', response);
+    
+    // Handle paginated response
+    if (response.data) {
+      orders.value = response.data;
+      
+      // Check if pagination data exists at root level
+      if (response.pagination) {
+        pagination.value = {
+          currentPage: response.pagination.current_page || 1,
+          perPage: response.pagination.per_page || 10,
+          total: response.pagination.total || 0,
+          lastPage: response.pagination.last_page || 1,
+          from: response.pagination.from || 0,
+          to: response.pagination.to || 0
+        };
+      } else {
+        // Fallback for non-paginated response
+        pagination.value = {
+          currentPage: 1,
+          perPage: pagination.value.perPage,
+          total: response.data.length,
+          lastPage: 1,
+          from: 1,
+          to: response.data.length
+        };
+      }
+    } else {
+      // Fallback for non-paginated response
+      orders.value = response;
+      pagination.value = {
+        currentPage: 1,
+        perPage: pagination.value.perPage,
+        total: response.length,
+        lastPage: 1,
+        from: 1,
+        to: response.length
+      };
+    }
+    
+    console.log('Pagination state:', pagination.value);
   } catch (error) {
     console.error("Error loading orders:", error);
   } finally {
@@ -1026,18 +1249,113 @@ function formatCurrency(value) {
   }
 }
 
+// Real-time connection functions
+async function connectWebSocket() {
+  console.log('🔌 Attempting to connect WebSocket...')
+  
+  const tenantId = tenantStore.currentTenant?.id || '01997f28-0912-72d7-8471-ccb1477d859a'
+  console.log('🏪 Current tenant:', tenantStore.currentTenant)
+  
+  try {
+    // Setup event handlers
+    setupWebSocketEventHandlers()
+    
+    // Connect using WebSocket service
+    const connected = await websocketService.connect(tenantId)
+    
+    if (connected) {
+      console.log('✅ Real-time WebSocket connection active, no polling needed')
+    } else {
+      console.log('⚠️ WebSocket connection failed, falling back to polling')
+      fallbackToPolling()
+    }
+  } catch (error) {
+    console.error('❌ WebSocket connection error:', error)
+    fallbackToPolling()
+  }
+}
+
+function setupWebSocketEventHandlers() {
+  // Handle new orders
+  websocketService.on('orderPlaced', (data) => {
+    console.log('🆕 New order received:', data)
+    
+    notifications.push({
+      title: 'New Order',
+      message: `Order #${data.order?.order_number || 'Unknown'} received`,
+      type: 'success'
+    })
+    
+    refresh()
+  })
+  
+  // Handle order updates
+  websocketService.on('orderUpdated', (data) => {
+    console.log('🔄 Order updated:', data)
+    refresh()
+  })
+  
+  // Handle order cancellations
+  websocketService.on('orderCancelled', (data) => {
+    console.log('❌ Order cancelled:', data)
+    
+    notifications.push({
+      title: 'Order Cancelled',
+      message: `Order #${data.order?.order_number || 'Unknown'} was cancelled`,
+      type: 'warning'
+    })
+    
+    refresh()
+  })
+}
+
+function fallbackToPolling() {
+  console.log('⚠️ No real-time option available, falling back to polling')
+  
+  autoRefreshTimer = setInterval(() => {
+    refresh()
+  }, 30000) // 30 seconds
+}
+
+function disconnectWebSocket() {
+  console.log('🔌 Disconnecting WebSocket...')
+  
+  // Disconnect WebSocket service
+  websocketService.disconnect()
+  
+  // Clear polling timer
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer)
+    autoRefreshTimer = null
+  }
+}
+
+// Watch for tenant changes to reconnect WebSocket
+watch(() => tenantStore.currentTenant, () => {
+  if (websocketService.getConnectionStatus()) {
+    disconnectWebSocket()
+    connectWebSocket()
+  }
+})
+
 // Load data on component mount
 onMounted(async () => {
   await Promise.all([loadOrders(), loadStats()]);
-  autoRefreshTimer = setInterval(() => {
-    refresh();
-  }, 15000);
+  
+  // Ensure tenant is loaded before connecting WebSocket
+  if (!tenantStore.currentTenant) {
+    console.log('🔄 Loading tenant before WebSocket connection...');
+    await tenantStore.init();
+  }
+  
+  // Small delay to ensure tenant is properly set
+  setTimeout(() => {
+    console.log('🏪 Final tenant check:', tenantStore.currentTenant);
+    connectWebSocket();
+  }, 100);
 });
 
 onUnmounted(() => {
-  if (autoRefreshTimer) {
-    clearInterval(autoRefreshTimer);
-    autoRefreshTimer = null;
-  }
+  disconnectWebSocket();
 });
 </script>
